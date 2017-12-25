@@ -1,0 +1,15 @@
+	/**
+	 * 在java环境里运行javascript代码
+	 * @param jsFile
+	 * @param jsFunctionName
+	 * @param args
+	 * @return
+	 * @throws ScriptException
+	 * @throws NoSuchMethodException
+	 * @throws IOException
+	 */
+	 
+	 
+	 
+	一、 因为原asone系统使用js脚本加密用户密码后,再提交到服务器,所以在这里用原来的加密脚本来加密，用到了java里的脚本引擎来运行md5.js文件
+	 
