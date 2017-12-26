@@ -1,13 +1,17 @@
 package cn.enixlin.jmrc.asone.manager.net;
 
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HttpContext;
 
 public class HttpClient {
 
 	private CloseableHttpClient httpClient;
 	private CookieStore cookieStore;
+	private HttpContext httpContext ;
+	private RequestConfig  requestConfig; 
 
 	public HttpClient() {
 		// TODO Auto-generated constructor stub
