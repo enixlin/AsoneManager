@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
 
+import cn.enixlin.jmrc.asone.manager.net.HttpClient;
 import cn.enixlin.jmrc.asone.manager.util.JavascriptEngine;
 
 import java.awt.event.ActionListener;
@@ -61,6 +62,9 @@ public class Login {
 					protected void done() {
 						// TODO Auto-generated method stub
 						super.done();
+						HttpClient client=new HttpClient();
+					
+						
 
 					}
 					@Override
