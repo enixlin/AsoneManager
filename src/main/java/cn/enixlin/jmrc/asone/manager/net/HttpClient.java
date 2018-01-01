@@ -1,19 +1,26 @@
 package cn.enixlin.jmrc.asone.manager.net;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
-public class HttpClient {
+public class HttpClient extends CloseableHttpClient {
 
-	private CloseableHttpClient httpClient;
+	//private CloseableHttpClient httpClient;
 	private CookieStore cookieStore;
 	private BasicHttpContext basicHttpContext;
 	private RequestConfig requestConfig;
@@ -21,35 +28,35 @@ public class HttpClient {
 	public HttpClient() {
 		// TODO Auto-generated constructor stub
 		super();
-		this.httpClient = HttpClients.createDefault();
 		this.basicHttpContext = new BasicHttpContext();
-		//basicHttpContext.setAttribute("connect", "www.124.com");
-		HttpGet httpget = new HttpGet("http://asone.safesvc.gov.cn/asone/jsp/code.jsp");
-		try {
-			httpClient.execute(httpget, basicHttpContext);
-		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		System.out.println("initial httpclient is done");
+
 	}
 
-	public int setInitConfig() {
-
-		return 0;
+	@Override
+	public HttpParams getParams() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	public Object doPost() {
-		Object object = null;
-		return object;
+	@Override
+	public ClientConnectionManager getConnectionManager() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	public Object doGet() {
-		Object object = null;
-		return object;
+	@Override
+	public void close() throws IOException {
+		// TODO Auto-generated method stub
+		
 	}
+
+	@Override
+	protected CloseableHttpResponse doExecute(HttpHost target, HttpRequest request, HttpContext context)
+			throws IOException, ClientProtocolException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
 
 }
