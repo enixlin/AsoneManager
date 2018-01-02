@@ -2,8 +2,10 @@ package cn.enixlin.jmrc.asone.manager.ui;
 
 import java.awt.EventQueue;
 
+import javax.imageio.ImageIO;
 import javax.script.ScriptException;
 import javax.swing.JFrame;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
 
@@ -12,9 +14,15 @@ import cn.enixlin.jmrc.asone.manager.util.JavascriptEngine;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -30,6 +38,7 @@ import javax.swing.border.LineBorder;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -46,6 +55,7 @@ public class Login {
 	private JTextField userName;
 	private JTextField password;
 	private JTextField varifyCode;
+	private JLabel label_verify;
 	private JTextField textField_4;
 	private JTable table;
 	private CloseableHttpClient httpClient;
@@ -79,6 +89,7 @@ public class Login {
 	 */
 	private void initialize() {
 		this.httpClient = new HttpClient();
+		
 		frmAso = new JFrame();
 		frmAso.setTitle("Asone用户批量生成器");
 		frmAso.setBounds(100, 100, 1009, 562);
@@ -88,47 +99,7 @@ public class Login {
 		JButton btn_login = new JButton("登录");
 		btn_login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				SwingWorker sw = new SwingWorker() {
-					@Override
-					protected void done() {
-						// TODO Auto-generated method stub
-						super.done();
-						HttpClient client = new HttpClient();
-
-					}
-
-					@Override
-					protected Object doInBackground() throws Exception {
-						// TODO Auto-generated method stub
-						JavascriptEngine je = new JavascriptEngine();
-						// String file="test.js";
-						// String functionName="show";
-						// String[] args={"aa","bb","cc"};
-						String file = "libs/md5.js";
-						String functionName = "hex_md5";
-						String[] args = { "123456Gj" };
-						String result = null;
-						try {
-							result = (String) je.jsRun(file, functionName, args);
-							structCode.setText(result);
-							System.out.println(je.jsRun(file, functionName, args));
-						} catch (NoSuchMethodException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (ScriptException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-
-							e.printStackTrace();
-						}
-						return result;
-					}
-
-				};
-				sw.execute();
-
+				doLogin();
 			}
 		});
 		btn_login.setBounds(275, 111, 84, 29);
@@ -173,11 +144,12 @@ public class Login {
 		varifyCode.setBounds(93, 118, 77, 24);
 		frmAso.getContentPane().add(varifyCode);
 
-		JLabel label_verify = new JLabel("New label");
+		label_verify = new JLabel("");
 		label_verify.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-
+				String strUrl="http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+				refreshVerifyCode(strUrl);
 			}
 		});
 		label_verify.setBounds(184, 121, 72, 18);
@@ -226,6 +198,11 @@ public class Login {
 		JLabel label_4 = new JLabel("用户清单文件");
 		label_4.setBounds(15, 8, 93, 18);
 		panel_1.add(label_4);
+		
+		//互联网
+		String strUrl="http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+		//刷新登录验证码
+		refreshVerifyCode(strUrl);
 	}
 
 	/**
@@ -235,22 +212,118 @@ public class Login {
 	 * @return
 	 */
 	public boolean getVerifyCode(String strUrl) {
-		httpClient = HttpClients.createDefault();
-		basicHttpContext = new BasicHttpContext();
-		HttpGet httpGet = new HttpGet(strUrl);
-		CloseableHttpResponse response = null;
-		try {
-			response = httpClient.execute(httpGet, basicHttpContext);
-			InputStream inputStream= response.getEntity().getContent();
+		
+		SwingWorker<Object, Object> sw=new SwingWorker<Object, Object>() {
 			
-		} catch (ClientProtocolException e) {
+			@Override
+			protected Object doInBackground() throws Exception {
+				// TODO Auto-generated method stub
+				httpClient = HttpClients.createDefault();
+				basicHttpContext = new BasicHttpContext();
+				HttpGet httpGet = new HttpGet(strUrl);
+				CloseableHttpResponse response = null;
+				FileOutputStream fos;
+				try {
+					response = httpClient.execute(httpGet, basicHttpContext);
+					InputStream inputStream = response.getEntity().getContent();
+					File file = new File("resource/varifyImage.jpg");
+					if (!file.exists()) {
+						file.createTempFile("varifyImage", "jpg");
+					}
+
+					fos = new FileOutputStream("resource/varifyImage.jpg");
+					byte[] data = new byte[1024];
+					int len = 0;
+					while ((len = inputStream.read(data)) != -1) {
+						fos.write(data, 0, len);
+					}
+					fos.close();
+					response.close();
+	
+				} catch (ClientProtocolException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				return null;
+			}
+		};
+		sw.execute();
+		return false;
+	}
+	
+	
+	/**
+	 * 刷新网站验证码
+	 * @return
+	 */
+	public boolean refreshVerifyCode(String strUrl) {
+	
+		this.getVerifyCode(strUrl);
+		//互联网
+		try {
+			label_verify.setIcon(new ImageIcon(ImageIO.read(new File("resource/varifyImage.jpg"))));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return true;
+	}
+	
+	
+	public boolean doLogin() {
+
+		try {
+			//取得所有的登录用户信息
+			String structCode=this.structCode.getText();    //机构号
+			String name=this.userName.getText();			//用户名
+			String jsFile="libs/md5.js";
+			String jsFunctionName="hex_md5";
+			Object[] args=new Object[1];
+			args[0]=this.password.getText();
+			String verifyCode=this.varifyCode.getText();	//验证码
+			String password=(String) new JavascriptEngine().jsRun(jsFile, jsFunctionName, args); //密码
+			
+			System.out.println("start do login");
+			System.out.println("structCode is :"+structCode);
+			System.out.println("name is :"+name);
+			System.out.println("password encryty is :"+password);
+			System.out.println("verifyCode is :"+verifyCode);
+			
+			//使用post方法提交登录，用户验证分为两步
+			//第一步是加密验证码
+			
+			String strCheckCodeUrl="";
+			HttpPost httpPost=new HttpPost(strCheckCodeUrl);
+			OutputStreamWriter osw=new OutputStreamWriter(new OutputStream() {
+				
+				@Override
+				public void write(int b) throws IOException {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+			
+			
+		} catch (NoSuchMethodException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ScriptException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return true;
+	}
+	
+	
+	public boolean encryptVerifyCode(String StructCode,String name,String password,String verifyCode) {
+		
 		return false;
-
 	}
 }

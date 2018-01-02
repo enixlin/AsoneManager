@@ -16,6 +16,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 
 public class HttpClient extends CloseableHttpClient {
 
@@ -48,6 +49,7 @@ public class HttpClient extends CloseableHttpClient {
 		// TODO Auto-generated method stub
 		
 	}
+
 
 	@Override
 	protected CloseableHttpResponse doExecute(HttpHost target, HttpRequest request, HttpContext context)
