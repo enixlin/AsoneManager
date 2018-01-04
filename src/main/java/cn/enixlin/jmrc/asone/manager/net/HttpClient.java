@@ -10,6 +10,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -57,7 +58,9 @@ public class HttpClient extends CloseableHttpClient {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	
+	 
 
 
 }

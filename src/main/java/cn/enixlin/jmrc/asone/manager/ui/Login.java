@@ -14,15 +14,21 @@ import cn.enixlin.jmrc.asone.manager.util.JavascriptEngine;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JTextField;
 import javax.swing.JLabel;
@@ -36,13 +42,16 @@ import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
 
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
+import org.omg.CORBA.NameValuePair;
 
 import java.awt.SystemColor;
 import java.awt.event.MouseAdapter;
@@ -89,7 +98,7 @@ public class Login {
 	 */
 	private void initialize() {
 		this.httpClient = new HttpClient();
-		
+
 		frmAso = new JFrame();
 		frmAso.setTitle("Asone用户批量生成器");
 		frmAso.setBounds(100, 100, 1009, 562);
@@ -99,7 +108,18 @@ public class Login {
 		JButton btn_login = new JButton("登录");
 		btn_login.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				doLogin();
+				try {
+					doLogin();
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ScriptException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		});
 		btn_login.setBounds(275, 111, 84, 29);
@@ -148,7 +168,7 @@ public class Login {
 		label_verify.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				String strUrl="http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+				String strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
 				refreshVerifyCode(strUrl);
 			}
 		});
@@ -198,10 +218,10 @@ public class Login {
 		JLabel label_4 = new JLabel("用户清单文件");
 		label_4.setBounds(15, 8, 93, 18);
 		panel_1.add(label_4);
-		
-		//互联网
-		String strUrl="http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
-		//刷新登录验证码
+
+		// 互联网
+		String strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+		// 刷新登录验证码
 		refreshVerifyCode(strUrl);
 	}
 
@@ -212,9 +232,9 @@ public class Login {
 	 * @return
 	 */
 	public boolean getVerifyCode(String strUrl) {
-		
-		SwingWorker<Object, Object> sw=new SwingWorker<Object, Object>() {
-			
+
+		SwingWorker<Object, Object> sw = new SwingWorker<Object, Object>() {
+
 			@Override
 			protected Object doInBackground() throws Exception {
 				// TODO Auto-generated method stub
@@ -239,7 +259,7 @@ public class Login {
 					}
 					fos.close();
 					response.close();
-	
+
 				} catch (ClientProtocolException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -247,23 +267,23 @@ public class Login {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				return null;
 			}
 		};
 		sw.execute();
 		return false;
 	}
-	
-	
+
 	/**
 	 * 刷新网站验证码
+	 * 
 	 * @return
 	 */
 	public boolean refreshVerifyCode(String strUrl) {
-	
+
 		this.getVerifyCode(strUrl);
-		//互联网
+		// 互联网
 		try {
 			label_verify.setIcon(new ImageIcon(ImageIO.read(new File("resource/varifyImage.jpg"))));
 		} catch (IOException e) {
@@ -272,58 +292,84 @@ public class Login {
 		}
 		return true;
 	}
-	
-	
-	public boolean doLogin() {
 
-		try {
-			//取得所有的登录用户信息
-			String structCode=this.structCode.getText();    //机构号
-			String name=this.userName.getText();			//用户名
-			String jsFile="libs/md5.js";
-			String jsFunctionName="hex_md5";
-			Object[] args=new Object[1];
-			args[0]=this.password.getText();
-			String verifyCode=this.varifyCode.getText();	//验证码
-			String password=(String) new JavascriptEngine().jsRun(jsFile, jsFunctionName, args); //密码
-			
+	public boolean doLogin() throws NoSuchMethodException, ScriptException, IOException {
+		
+		// 取得所有的登录用户信息
+		String structCode = this.structCode.getText(); // 机构号
+		String name = this.userName.getText(); // 用户名
+		String jsFile = "libs/md5.js";
+		String jsFunctionName = "hex_md5";
+		Object[] args = new Object[1];
+		
+		args[0] = this.password.getText();
+		String verifyCode = this.varifyCode.getText(); // 验证码
+		
+		String password = (String) new JavascriptEngine().jsRun(jsFile, jsFunctionName, args);
+		
 			System.out.println("start do login");
-			System.out.println("structCode is :"+structCode);
-			System.out.println("name is :"+name);
-			System.out.println("password encryty is :"+password);
-			System.out.println("verifyCode is :"+verifyCode);
+			System.out.println("structCode is :" + structCode);
+			System.out.println("name is :" + name);
+			System.out.println("password encryty is :" + password);
+			System.out.println("verifyCode is :" + verifyCode);
 			
-			//使用post方法提交登录，用户验证分为两步
-			//第一步是加密验证码
 			
-			String strCheckCodeUrl="";
-			HttpPost httpPost=new HttpPost(strCheckCodeUrl);
-			OutputStreamWriter osw=new OutputStreamWriter(new OutputStream() {
-				
+			SwingWorker<String, String> sw=new SwingWorker<String, String>(){
 				@Override
-				public void write(int b) throws IOException {
+				protected String doInBackground() throws Exception {
 					// TODO Auto-generated method stub
+				
+						// 使用post方法提交登录，用户验证分为两步
+						// 第一步是加密验证码
+
+						//String strCheckCodeUrl = "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
+						//String strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
+						String strCheckCodeUrl = "http://asone.safe:80/asone/servlet/AuthorityServlet";
+						
+						
+						HttpPost httpPost = new HttpPost(strCheckCodeUrl);
+						ArrayList<BasicNameValuePair> parameters = new ArrayList<BasicNameValuePair>();
+						parameters.add(new BasicNameValuePair("orgCode", structCode));
+						parameters.add(new BasicNameValuePair("userCode", name));
+						parameters.add(new BasicNameValuePair("pwd", password));
+						parameters.add(new BasicNameValuePair("check", verifyCode));
+						String charset = "utf-8";
+						httpPost.setEntity(new UrlEncodedFormEntity(parameters, charset));
+
+						CloseableHttpResponse response = httpClient.execute(httpPost, basicHttpContext);
+
+						StringBuffer sb = new StringBuffer();
+						String readLine = new String();
+						BufferedReader responseReader = new BufferedReader(
+								new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+						while ((readLine = responseReader.readLine()) != null) {
+							sb.append(readLine).append("\n");
+						}
+						responseReader.close();
+						System.out.println(sb.toString());
+
+						System.out.println("post is done");
+						
+
+					return null; 
+					
+					
 					
 				}
-			});
+				
+			};
+			sw.execute();
 			
-			
-		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ScriptException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return true;
-	}
 	
-	
-	public boolean encryptVerifyCode(String StructCode,String name,String password,String verifyCode) {
 		
+
+		return false;
+	
+	}
+
+	public boolean encryptVerifyCode(String StructCode, String name, String password, String verifyCode) {
+
 		return false;
 	}
+
 }
