@@ -1,44 +1,35 @@
 package cn.enixlin.jmrc.asone.manager.ui;
 
+import java.awt.Color;
 import java.awt.EventQueue;
-
-import javax.imageio.ImageIO;
-import javax.script.ScriptException;
-import javax.swing.JFrame;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.SwingWorker;
-
-import cn.enixlin.jmrc.asone.manager.net.HttpClient;
-import cn.enixlin.jmrc.asone.manager.util.JavascriptEngine;
-
-import java.awt.event.ActionListener;
+import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import javax.swing.JTextField;
+import javax.imageio.ImageIO;
+import javax.script.ScriptException;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
-
-import java.awt.Color;
-
-import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingWorker;
 import javax.swing.border.LineBorder;
 
 import org.apache.http.client.ClientProtocolException;
@@ -46,16 +37,14 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
-import org.omg.CORBA.NameValuePair;
 
-import java.awt.SystemColor;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import cn.enixlin.jmrc.asone.manager.net.HttpClient;
+import cn.enixlin.jmrc.asone.manager.util.JavascriptEngine;
+import javax.swing.DefaultComboBoxModel;
 
 public class Login {
 
@@ -69,6 +58,7 @@ public class Login {
 	private JTable table;
 	private CloseableHttpClient httpClient;
 	private BasicHttpContext basicHttpContext;
+	private String netType;
 
 	/**
 	 * Launch the application.
@@ -97,7 +87,7 @@ public class Login {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		this.httpClient = new HttpClient();
+		this.httpClient = HttpClients.createDefault();
 
 		frmAso = new JFrame();
 		frmAso.setTitle("Asone用户批量生成器");
@@ -168,7 +158,12 @@ public class Login {
 		label_verify.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				String strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+				String strUrl = "";
+				if (netType == "internet") {
+					strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
+				} else {
+					strUrl = "http://asone.safe/asone/jsp/code.jsp?refresh=" + Math.random();
+				}
 				refreshVerifyCode(strUrl);
 			}
 		});
@@ -191,6 +186,23 @@ public class Login {
 		panel.setBorder(new LineBorder(SystemColor.activeCaption));
 		panel.setBounds(7, 4, 366, 142);
 		frmAso.getContentPane().add(panel);
+		panel.setLayout(null);
+
+		JComboBox comboBox = new JComboBox();
+		comboBox.setModel(new DefaultComboBoxModel(new String[] { "互联网", "内网" }));
+		comboBox.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if (comboBox.getSelectedIndex() == 0) {
+					netType = "internet";
+					System.out.println(netType);
+				} else {
+					netType = "network";
+					System.out.println(netType);
+				}
+			}
+		});
+		comboBox.setBounds(269, 10, 87, 21);
+		panel.add(comboBox);
 
 		JPanel panel_1 = new JPanel();
 		panel_1.setBorder(new LineBorder(SystemColor.activeCaption));
@@ -294,82 +306,79 @@ public class Login {
 	}
 
 	public boolean doLogin() throws NoSuchMethodException, ScriptException, IOException {
-		
+
 		// 取得所有的登录用户信息
 		String structCode = this.structCode.getText(); // 机构号
 		String name = this.userName.getText(); // 用户名
 		String jsFile = "libs/md5.js";
 		String jsFunctionName = "hex_md5";
 		Object[] args = new Object[1];
-		
+
 		args[0] = this.password.getText();
 		String verifyCode = this.varifyCode.getText(); // 验证码
-		
+
 		String password = (String) new JavascriptEngine().jsRun(jsFile, jsFunctionName, args);
-		
-			System.out.println("start do login");
-			System.out.println("structCode is :" + structCode);
-			System.out.println("name is :" + name);
-			System.out.println("password encryty is :" + password);
-			System.out.println("verifyCode is :" + verifyCode);
-			
-			
-			SwingWorker<String, String> sw=new SwingWorker<String, String>(){
-				@Override
-				protected String doInBackground() throws Exception {
-					// TODO Auto-generated method stub
-				
-						// 使用post方法提交登录，用户验证分为两步
-						// 第一步是加密验证码
 
-						//String strCheckCodeUrl = "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
-						//String strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
-						String strCheckCodeUrl = "http://asone.safe:80/asone/servlet/AuthorityServlet";
-						
-						
-						HttpPost httpPost = new HttpPost(strCheckCodeUrl);
-						ArrayList<BasicNameValuePair> parameters = new ArrayList<BasicNameValuePair>();
-						parameters.add(new BasicNameValuePair("orgCode", structCode));
-						parameters.add(new BasicNameValuePair("userCode", name));
-						parameters.add(new BasicNameValuePair("pwd", password));
-						parameters.add(new BasicNameValuePair("check", verifyCode));
-						String charset = "utf-8";
-						httpPost.setEntity(new UrlEncodedFormEntity(parameters, charset));
+		System.out.println("start do login");
+		System.out.println("structCode is :" + structCode);
+		System.out.println("name is :" + name);
+		System.out.println("password encryty is :" + password);
+		System.out.println("verifyCode is :" + verifyCode);
 
-						CloseableHttpResponse response = httpClient.execute(httpPost, basicHttpContext);
+		SwingWorker<String, String> sw = new SwingWorker<String, String>() {
+			@Override
+			protected String doInBackground() throws Exception {
+				// TODO Auto-generated method stub
 
-						StringBuffer sb = new StringBuffer();
-						String readLine = new String();
-						BufferedReader responseReader = new BufferedReader(
-								new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
-						while ((readLine = responseReader.readLine()) != null) {
-							sb.append(readLine).append("\n");
-						}
-						responseReader.close();
-						System.out.println(sb.toString());
+				// 使用post方法提交登录，用户验证分为两步
+				// 第一步是加密验证码
 
-						System.out.println("post is done");
-						
-
-					return null; 
-					
-					
-					
+				// String strCheckCodeUrl =
+				// "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
+				// String strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
+				String strCheckCodeUrl = "";
+				if (netType == "internet") {
+					strCheckCodeUrl = "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
+				} else {
+					strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
 				}
-				
-			};
-			sw.execute();
-			
-	
-		
+
+				HttpPost httpPost = new HttpPost(strCheckCodeUrl);
+				ArrayList<BasicNameValuePair> parameters = new ArrayList<BasicNameValuePair>();
+				parameters.add(new BasicNameValuePair("orgCode", structCode));
+				parameters.add(new BasicNameValuePair("userCode", name));
+				parameters.add(new BasicNameValuePair("pwd", password));
+				parameters.add(new BasicNameValuePair("check", verifyCode));
+				String charset = "utf-8";
+				httpPost.setEntity(new UrlEncodedFormEntity(parameters, charset));
+
+				CloseableHttpResponse response = httpClient.execute(httpPost, basicHttpContext);
+
+				StringBuffer sb = new StringBuffer();
+				String readLine = new String();
+				BufferedReader responseReader = new BufferedReader(
+						new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+				while ((readLine = responseReader.readLine()) != null) {
+					sb.append(readLine).append("\n");
+				}
+				responseReader.close();
+				System.out.println(sb.toString());
+
+				System.out.println("post is done");
+
+				return null;
+
+			}
+
+		};
+		sw.execute();
 
 		return false;
-	
+
 	}
 
 	public boolean encryptVerifyCode(String StructCode, String name, String password, String verifyCode) {
 
 		return false;
 	}
-
 }
