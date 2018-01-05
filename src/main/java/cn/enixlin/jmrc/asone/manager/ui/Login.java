@@ -159,7 +159,7 @@ public class Login {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				String strUrl = "";
-				if (netType == "internet") {
+				if (netType.equals("internet")) {
 					strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
 				} else {
 					strUrl = "http://asone.safe/asone/jsp/code.jsp?refresh=" + Math.random();
@@ -231,6 +231,8 @@ public class Login {
 		label_4.setBounds(15, 8, 93, 18);
 		panel_1.add(label_4);
 
+		netType="internet";
+		
 		// 互联网
 		String strUrl = "http://asone.safesvc.gov.cn/asone/jsp/code.jsp?refresh=" + Math.random();
 		// 刷新登录验证码
@@ -246,6 +248,19 @@ public class Login {
 	public boolean getVerifyCode(String strUrl) {
 
 		SwingWorker<Object, Object> sw = new SwingWorker<Object, Object>() {
+
+			@Override
+			protected void done() {
+				// TODO Auto-generated method stub
+				super.done();	// 互联网
+				try {
+					label_verify.setIcon(new ImageIcon(ImageIO.read(new File("resource/varifyImage.jpg"))));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
 
 			@Override
 			protected Object doInBackground() throws Exception {
@@ -295,13 +310,7 @@ public class Login {
 	public boolean refreshVerifyCode(String strUrl) {
 
 		this.getVerifyCode(strUrl);
-		// 互联网
-		try {
-			label_verify.setIcon(new ImageIcon(ImageIO.read(new File("resource/varifyImage.jpg"))));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
 		return true;
 	}
 
@@ -337,7 +346,7 @@ public class Login {
 				// "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
 				// String strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
 				String strCheckCodeUrl = "";
-				if (netType == "internet") {
+				if (netType.equals("internet")) {
 					strCheckCodeUrl = "http://asone.safesvc.gov.cn/asone/jsp/checkCode.jsp";
 				} else {
 					strCheckCodeUrl = "http://asone.safe/asone/jsp/checkCode.jsp";
